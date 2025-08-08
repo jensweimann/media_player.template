@@ -15,7 +15,6 @@ from homeassistant.components.media_player import (
     MediaPlayerState,
 )
 from homeassistant.components.template.const import (
-    CONF_AVAILABILITY_TEMPLATE,
     DOMAIN,
     PLATFORMS,
 )
@@ -24,8 +23,6 @@ from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_FRIENDLY_NAME,
     CONF_DEVICE_CLASS,
-    CONF_ENTITY_PICTURE_TEMPLATE,
-    CONF_ICON_TEMPLATE,
     CONF_UNIQUE_ID,
     CONF_VALUE_TEMPLATE,
     STATE_UNKNOWN,
@@ -46,7 +43,6 @@ _VALID_STATES = [
     MediaPlayerState.PAUSED,
     MediaPlayerState.PLAYING,
 ]
-CONF_AVAILABILITY_TEMPLATE = "availability_template"
 CONF_MEDIAPLAYER = "media_players"
 ON_ACTION = "turn_on"
 OFF_ACTION = "turn_off"
@@ -85,11 +81,8 @@ CONF_SOUND_MODES = "sound_modes"
 MEDIA_PLAYER_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_VALUE_TEMPLATE): cv.template,
-        vol.Optional(CONF_ICON_TEMPLATE): cv.template,
         vol.Optional(CONF_DEVICE_CLASS): cv.string,
         vol.Optional(CONF_UNIQUE_ID): cv.string,
-        vol.Optional(CONF_ENTITY_PICTURE_TEMPLATE): cv.template,
-        vol.Optional(CONF_AVAILABILITY_TEMPLATE): cv.template,
         vol.Optional(CURRENT_SOURCE_TEMPLATE): cv.template,
         vol.Optional(ON_ACTION): cv.SCRIPT_SCHEMA,
         vol.Optional(OFF_ACTION): cv.SCRIPT_SCHEMA,
@@ -147,10 +140,7 @@ async def _async_create_entities(hass, config):
         friendly_name = device_config.get(ATTR_FRIENDLY_NAME, device)
         device_class = device_config.get(CONF_DEVICE_CLASS, device)
         state_template = device_config[CONF_VALUE_TEMPLATE]
-        icon_template = device_config.get(CONF_ICON_TEMPLATE)
         unique_id = device_config.get(CONF_UNIQUE_ID)
-        entity_picture_template = device_config.get(CONF_ENTITY_PICTURE_TEMPLATE)
-        availability_template = device_config.get(CONF_AVAILABILITY_TEMPLATE)
         current_source_template = device_config.get(CURRENT_SOURCE_TEMPLATE)
         on_action = device_config.get(ON_ACTION)
         off_action = device_config.get(OFF_ACTION)
@@ -191,10 +181,7 @@ async def _async_create_entities(hass, config):
                 friendly_name,
                 device_class,
                 state_template,
-                icon_template,
                 unique_id,
-                entity_picture_template,
-                availability_template,
                 current_source_template,
                 on_action,
                 off_action,
@@ -242,10 +229,7 @@ class MediaPlayerTemplate(TemplateEntity, MediaPlayerEntity):
         friendly_name,
         device_class,
         state_template,
-        icon_template,
         unique_id,
-        entity_picture_template,
-        availability_template,
         current_source_template,
         on_action,
         off_action,
@@ -282,9 +266,8 @@ class MediaPlayerTemplate(TemplateEntity, MediaPlayerEntity):
         """Initialize the Template Media player."""
         super().__init__(
             hass,
-            availability_template=availability_template,
-            icon_template=icon_template,
-            entity_picture_template=entity_picture_template,
+            config={},
+            unique_id=unique_id,
         )
         self.hass = hass
         self.entity_id = async_generate_entity_id(
@@ -361,7 +344,6 @@ class MediaPlayerTemplate(TemplateEntity, MediaPlayerEntity):
         self._unique_id = None
         if unique_id is not None:
             self._unique_id = unique_id
-        self._entity_picture = None
         self._available = True
         self._input_templates = input_templates
         self._current_source_template = current_source_template
@@ -782,9 +764,6 @@ class MediaPlayerTemplate(TemplateEntity, MediaPlayerEntity):
             self._state = None
 
         for property_name, template in (
-            ("_icon", self._icon_template),
-            ("_entity_picture", self._entity_picture_template),
-            ("_available", self._availability_template),
             ("_volume", self._current_volume_template),
             ("_is_muted", self._current_is_muted_template),
             ("_track_name", self._title_template),
